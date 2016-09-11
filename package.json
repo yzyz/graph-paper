@@ -1,6 +1,7 @@
 {
   "name": "graph-paper",
   "version": "0.1.0",
+  "homepage": "http://yzyz.github.io/graph-paper",
   "private": true,
   "devDependencies": {
     "react-scripts": "0.4.1"
