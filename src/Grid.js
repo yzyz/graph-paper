@@ -5,7 +5,7 @@ var Grid = React.createClass({
   getInitialState: function() {
     return {
       scale: 40,
-      origin: {top: 200, left: 560},
+      origin: {top: 200, left: 560}, // TODO: change to clientX, clientY
       points: [
         {x: 0, y: 0},
       ],
@@ -18,7 +18,19 @@ var Grid = React.createClass({
     dragStartMousePos: {clientX: 0, clientY: 0},
   },
 
-  handleClick: function(e) {
+  closestPoint: function(p) {
+    var scale = this.state.scale;
+
+    var relX = p.clientX - this.state.origin.left;
+    var relY = p.clientY - this.state.origin.top;
+
+    var closestX = Math.round( 1.0 * relX / scale);
+    var closestY = Math.round(-1.0 * relY / scale);
+
+    return {x: closestX, y: closestY};
+  },
+
+  handleMouseDown: function(e) {
     var scale = this.state.scale;
 
     var clientX = e.clientX - this.state.origin.left;
@@ -32,46 +44,35 @@ var Grid = React.createClass({
       var newPoints = this.state.points.slice(0); // a copy
       newPoints.push({x: closestX, y: closestY});
       this.setState({points: newPoints});
+    } else {
+      console.log("drag start");
+      e.target.setCapture(); // allows drag and stuff outside the window
+      this.mouseData.dragging = true;
+      this.mouseData.dragStartOrigin = {
+        top:  this.state.origin.top,
+        left: this.state.origin.left,
+      };
+      this.mouseData.dragStartMousePos = {
+        clientX: e.clientX,
+        clientY: e.clientY,
+      };
     }
   },
 
-  // TODO: switch over to mouseDown / mouseMove. onDrag is too annoying
-  handleDragOver: function(e) {
-    e.preventDefault();
+  handleMouseMove: function(e) {
+    if (this.mouseData.dragging) {
+      console.log("dragging");
+      var dy = e.clientY - this.mouseData.dragStartMousePos.clientY;
+      var dx = e.clientX - this.mouseData.dragStartMousePos.clientX;
+      var newOrigin = {
+        top:  this.mouseData.dragStartOrigin.top  + dy,
+        left: this.mouseData.dragStartOrigin.left + dx,
+      };
+      this.setState({origin: newOrigin});
+    }
   },
 
-  handleDragStart: function(e) {
-    console.log("drag start");
-    e.dataTransfer.setData("text", e.target.id);
-    e.dataTransfer.mozCursor = 'default';
-    // hide drag image
-    e.dataTransfer.setDragImage(new Image(), 0, 0);
-
-    this.mouseData.dragging = true;
-    this.mouseData.dragStartOrigin = {
-      top:  this.state.origin.top,
-      left: this.state.origin.left,
-    };
-    this.mouseData.dragStartMousePos = {
-      clientX: e.clientX,
-      clientY: e.clientY,
-    };
-  },
-
-  handleDrag: function(e) {
-    console.log("dragging");
-    // broken in firefox
-    var dy = e.clientY - this.mouseData.dragStartMousePos.clientY;
-    var dx = e.clientX - this.mouseData.dragStartMousePos.clientX;
-    var newOrigin = {
-      top:  this.mouseData.dragStartOrigin.top  + dy,
-      left: this.mouseData.dragStartOrigin.left + dx,
-    };
-    //console.log(newOrigin);
-    this.setState({origin: newOrigin});
-  },
-
-  handleDragEnd: function(e) {
+  handleMouseUp: function(e) {
     console.log("drag end");
     this.mouseData.dragging = false;
   },
@@ -92,12 +93,9 @@ var Grid = React.createClass({
     return (
       <div className="Grid"
            style={style}
-           onClick={this.handleClick}
-           draggable={true}
-           onDragOver={this.handleDragOver}
-           onDragStart={this.handleDragStart}
-           onDrag={this.handleDrag}
-           onDragEnd={this.handleDragEnd}>
+           onMouseDown={this.handleMouseDown}
+           onMouseMove={this.handleMouseMove}
+           onMouseUp={this.handleMouseUp}>
         <div style={{position: 'fixed', top: origin.top, left: origin.left}}>
           {this.state.points.map(function(p) {
             return <Point top={-p.y*scale} left={p.x*scale}/>;
