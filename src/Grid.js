@@ -5,7 +5,7 @@ var Grid = React.createClass({
   getInitialState: function() {
     return {
       scale: 40,
-      origin: {top: 200, left: 560}, // TODO: change to clientX, clientY
+      origin: {clientX: 0, clientY: 0},
       points: [
         {x: 0, y: 0},
       ],
@@ -14,15 +14,15 @@ var Grid = React.createClass({
 
   mouseData: {
     dragging: false,
-    dragStartOrigin: {top: 0, left: 0},
+    dragStartOrigin: {clientX: 0, clientY: 0},
     dragStartMousePos: {clientX: 0, clientY: 0},
   },
 
   closestPoint: function(p) {
     var scale = this.state.scale;
 
-    var relX = p.clientX - this.state.origin.left;
-    var relY = p.clientY - this.state.origin.top;
+    var relX = p.clientX - this.state.origin.clientX;
+    var relY = p.clientY - this.state.origin.clientY;
 
     var closestX = Math.round( 1.0 * relX / scale);
     var closestY = Math.round(-1.0 * relY / scale);
@@ -33,8 +33,8 @@ var Grid = React.createClass({
   handleMouseDown: function(e) {
     var scale = this.state.scale;
 
-    var clientX = e.clientX - this.state.origin.left;
-    var clientY = e.clientY - this.state.origin.top;
+    var clientX = e.clientX - this.state.origin.clientX;
+    var clientY = e.clientY - this.state.origin.clientY;
 
     var closestX = Math.round(1.0 * clientX / scale);
     var closestY = Math.round(-1.0 * clientY / scale);
@@ -49,8 +49,8 @@ var Grid = React.createClass({
       e.target.setCapture(); // allows drag and stuff outside the window
       this.mouseData.dragging = true;
       this.mouseData.dragStartOrigin = {
-        top:  this.state.origin.top,
-        left: this.state.origin.left,
+        clientX: this.state.origin.clientX,
+        clientY: this.state.origin.clientY,
       };
       this.mouseData.dragStartMousePos = {
         clientX: e.clientX,
@@ -62,11 +62,11 @@ var Grid = React.createClass({
   handleMouseMove: function(e) {
     if (this.mouseData.dragging) {
       console.log("dragging");
-      var dy = e.clientY - this.mouseData.dragStartMousePos.clientY;
       var dx = e.clientX - this.mouseData.dragStartMousePos.clientX;
+      var dy = e.clientY - this.mouseData.dragStartMousePos.clientY;
       var newOrigin = {
-        top:  this.mouseData.dragStartOrigin.top  + dy,
-        left: this.mouseData.dragStartOrigin.left + dx,
+        clientX: this.mouseData.dragStartOrigin.clientX + dx,
+        clientY: this.mouseData.dragStartOrigin.clientY + dy,
       };
       this.setState({origin: newOrigin});
     }
@@ -86,7 +86,7 @@ var Grid = React.createClass({
       backgroundImage: 'linear-gradient(to right, grey 1px, transparent 1px), linear-gradient(to bottom, grey 1px, transparent 1px)',
       height: '100vh',
       width: '100vw',
-      backgroundPosition: origin.left + 'px ' + origin.top + 'px',
+      backgroundPosition: origin.clientX + 'px ' + origin.clientY + 'px',
       position: 'fixed',
     };
 
@@ -96,9 +96,9 @@ var Grid = React.createClass({
            onMouseDown={this.handleMouseDown}
            onMouseMove={this.handleMouseMove}
            onMouseUp={this.handleMouseUp}>
-        <div style={{position: 'fixed', top: origin.top, left: origin.left}}>
+        <div style={{position: 'fixed', top: origin.clientY, left: origin.clientX}}>
           {this.state.points.map(function(p) {
-            return <Point top={-p.y*scale} left={p.x*scale}/>;
+            return <Point relY={-p.y*scale} relX={p.x*scale}/>;
           })}
         </div>
       </div>

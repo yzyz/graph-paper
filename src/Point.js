@@ -10,8 +10,8 @@ var Point = React.createClass({
         width: 2*RADIUS + 1, // +1 to center
         height: 2*RADIUS + 1,
         position: "absolute",
-        top: this.props.top - RADIUS,
-        left: this.props.left - RADIUS,
+        top:  this.props.relY - RADIUS,
+        left: this.props.relX - RADIUS,
     };
 
     return (
