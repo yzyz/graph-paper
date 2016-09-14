@@ -1,6 +1,9 @@
 import React from 'react';
 import Point, {RADIUS} from './Point';
 
+const LEFT_MOUSE_BUTTON = 0;
+const RIGHT_MOUSE_BUTTON = 2;
+
 var Grid = React.createClass({
   getInitialState: function() {
     return {
@@ -18,7 +21,7 @@ var Grid = React.createClass({
     dragStartMousePos: {clientX: 0, clientY: 0},
   },
 
-  closestPoint: function(p) {
+  clientToPoint: function(p) {
     var scale = this.state.scale;
 
     var relX = p.clientX - this.state.origin.clientX;
@@ -30,32 +33,55 @@ var Grid = React.createClass({
     return {x: closestX, y: closestY};
   },
 
-  handleMouseDown: function(e) {
+  pointToRel: function(p) {
     var scale = this.state.scale;
+    return {relX: p.x * scale, relY: -p.y * scale};
+  },
 
-    var clientX = e.clientX - this.state.origin.clientX;
-    var clientY = e.clientY - this.state.origin.clientY;
+  dragGridStart: function(e) {
+    console.log("drag start");
+    //e.target.setCapture(); // allows drag and stuff outside the window, but broken in chrome
+    this.mouseData.dragging = true;
+    this.mouseData.dragStartOrigin = {
+      clientX: this.state.origin.clientX,
+      clientY: this.state.origin.clientY,
+    };
+    this.mouseData.dragStartMousePos = {
+      clientX: e.clientX,
+      clientY: e.clientY,
+    };
+  },
 
-    var closestX = Math.round(1.0 * clientX / scale);
-    var closestY = Math.round(-1.0 * clientY / scale);
+  handleMouseDown: function(e) {
+    /* on left click:
+     * if at grid point, create point / line
+     * otherwise move grid
+     *
+     * on right click:
+     * if on point, move point
+     * otherwise move grid
+     */
 
-    // only create a point if sufficiently close
-    if (Math.hypot(closestX *  scale - clientX, closestY * -scale - clientY) < 3 * RADIUS) {
-      var newPoints = this.state.points.slice(0); // a copy
-      newPoints.push({x: closestX, y: closestY});
-      this.setState({points: newPoints});
-    } else {
-      console.log("drag start");
-      e.target.setCapture(); // allows drag and stuff outside the window
-      this.mouseData.dragging = true;
-      this.mouseData.dragStartOrigin = {
-        clientX: this.state.origin.clientX,
-        clientY: this.state.origin.clientY,
+    if (e.button === LEFT_MOUSE_BUTTON) {
+      var closest = this.clientToPoint(e);
+      var ppos = this.pointToRel(closest);
+      var mpos = {
+        relX: e.clientX - this.state.origin.clientX,
+        relY: e.clientY - this.state.origin.clientY,
       };
-      this.mouseData.dragStartMousePos = {
-        clientX: e.clientX,
-        clientY: e.clientY,
-      };
+
+      // only create a point if sufficiently close
+      if (Math.hypot(ppos.relX - mpos.relX, ppos.relY - mpos.relY) < 3 * RADIUS) {
+        var newPoints = this.state.points.slice(0); // a copy, also doesn't actually work since array of objects
+        newPoints.push(closest);
+        this.setState({points: newPoints});
+        // TODO: create line?
+      } else {
+        this.dragGridStart(e);
+      }
+    } else if (e.button === RIGHT_MOUSE_BUTTON) {
+      // TODO: move point
+      this.dragGridStart(e);
     }
   },
 
@@ -73,8 +99,14 @@ var Grid = React.createClass({
   },
 
   handleMouseUp: function(e) {
-    console.log("drag end");
-    this.mouseData.dragging = false;
+    if (this.mouseData.dragging) {
+      console.log("drag end");
+      this.mouseData.dragging = false;
+    }
+  },
+
+  preventContextMenu: function(e) {
+    e.preventDefault();
   },
 
   render: function() {
@@ -93,6 +125,7 @@ var Grid = React.createClass({
     return (
       <div className="Grid"
            style={style}
+           onContextMenu={this.preventContextMenu}
            onMouseDown={this.handleMouseDown}
            onMouseMove={this.handleMouseMove}
            onMouseUp={this.handleMouseUp}>
