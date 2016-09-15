@@ -10,7 +10,7 @@ var Grid = React.createClass({
       scale: 40,
       origin: {clientX: 0, clientY: 0},
       points: [
-        {x: 0, y: 0},
+        {x: 0, y: 0, id: 0},
       ],
     }
   },
@@ -20,6 +20,8 @@ var Grid = React.createClass({
     dragStartOrigin: {clientX: 0, clientY: 0},
     dragStartMousePos: {clientX: 0, clientY: 0},
   },
+
+  nextId: 1,
 
   clientToPoint: function(p) {
     var scale = this.state.scale;
@@ -72,6 +74,7 @@ var Grid = React.createClass({
 
       // only create a point if sufficiently close
       if (Math.hypot(ppos.relX - mpos.relX, ppos.relY - mpos.relY) < 3 * RADIUS) {
+        closest.id = this.nextId++;
         var newPoints = this.state.points.slice(0); // a copy, also doesn't actually work since array of objects
         newPoints.push(closest);
         this.setState({points: newPoints});
@@ -131,7 +134,7 @@ var Grid = React.createClass({
            onMouseUp={this.handleMouseUp}>
         <div style={{position: 'fixed', top: origin.clientY, left: origin.clientX}}>
           {this.state.points.map(function(p) {
-            return <Point relY={-p.y*scale} relX={p.x*scale}/>;
+            return <Point key={p.id} relY={-p.y*scale} relX={p.x*scale}/>;
           })}
         </div>
       </div>
