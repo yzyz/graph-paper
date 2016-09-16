@@ -23,6 +23,13 @@ var Grid = React.createClass({
 
   nextId: 1,
 
+  // returns a copy of this.state.points
+  getPoints: function() {
+    return this.state.points.map(function(p) {
+      return {x: p.x, y: p.y, id: p.id};
+    });
+  },
+
   clientToPoint: function(p) {
     var scale = this.state.scale;
 
@@ -75,7 +82,7 @@ var Grid = React.createClass({
       // only create a point if sufficiently close
       if (Math.hypot(ppos.relX - mpos.relX, ppos.relY - mpos.relY) < 3 * RADIUS) {
         closest.id = this.nextId++;
-        var newPoints = this.state.points.slice(0); // a copy, also doesn't actually work since array of objects
+        var newPoints = this.getPoints(); // a copy
         newPoints.push(closest);
         this.setState({points: newPoints});
         // TODO: create line?
