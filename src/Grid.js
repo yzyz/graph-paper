@@ -1,5 +1,6 @@
 import React from 'react';
 import Point, {RADIUS} from './Point';
+import Line from './Line';
 
 const LEFT_MOUSE_BUTTON = 0;
 const RIGHT_MOUSE_BUTTON = 2;
@@ -12,6 +13,7 @@ var Grid = React.createClass({
       points: [
         {x: 0, y: 0, id: 0},
       ],
+      lines: [],
     }
   },
 
@@ -28,6 +30,14 @@ var Grid = React.createClass({
     return this.state.points.map(function(p) {
       return {x: p.x, y: p.y, id: p.id};
     });
+  },
+
+  getPointById: function(id) {
+    for (var i = 0; i < this.state.points.length; i++) {
+      var p = this.state.points[i];
+      if (p.id === id) return p;
+    }
+    return null;
   },
 
   clientToPoint: function(p) {
@@ -85,7 +95,10 @@ var Grid = React.createClass({
         var newPoints = this.getPoints(); // a copy
         newPoints.push(closest);
         this.setState({points: newPoints});
-        // TODO: create line?
+        // TODO: add lines correctly
+        var newLines = this.state.lines.slice(0);
+        newLines.push([0, closest.id]);
+        this.setState({lines: newLines});
       } else {
         this.dragGridStart(e);
       }
@@ -132,6 +145,7 @@ var Grid = React.createClass({
       position: 'fixed',
     };
 
+    var g = this;
     return (
       <div className="Grid"
            style={style}
@@ -142,6 +156,9 @@ var Grid = React.createClass({
         <div style={{position: 'fixed', top: origin.clientY, left: origin.clientX}}>
           {this.state.points.map(function(p) {
             return <Point key={p.id} relY={-p.y*scale} relX={p.x*scale}/>;
+          })}
+          {this.state.lines.map(function(l) {
+            return <Line a={g.pointToRel(g.getPointById(l[0]))} b={g.pointToRel(g.getPointById(l[1]))}/>
           })}
         </div>
       </div>
